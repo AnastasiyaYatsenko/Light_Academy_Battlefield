@@ -1,0 +1,5 @@
+seed: 123
+armies_amount: 3
+strategy: strongest
+squad_amount: 2
+units_amount: 5
