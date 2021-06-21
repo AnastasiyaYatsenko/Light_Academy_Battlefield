@@ -2,6 +2,7 @@ import random
 import time
 from abc import ABCMeta, abstractmethod
 import yaml
+import collections
 
 
 class Unit(metaclass=ABCMeta):
@@ -99,7 +100,7 @@ class Soldier(Unit):
 
     def __init__(self):
         cd = random.randint(100, 2000)
-        Unit.__init__(self, 100, cd)
+        super().__init__(100, cd)
         self.name = "soldier"
 
     def attack(self, enemy):
@@ -145,8 +146,7 @@ class Soldier(Unit):
         if now - self.last_attacked >= self.cd:
             self.last_attacked = now
             return 0.05 + self.exp / 100
-        else:
-            return 0.05 + self.exp / 100
+        return 0.05 + self.exp / 100
 
     def is_active(self):
         """ Returns true, if a soldier is alive """
@@ -175,17 +175,17 @@ class Vehicle(Unit):
 
      """
 
-    def __init__(self):
+    def __init__(self, oper_amount, operators):
         cd = random.randint(1000, 2000)
-        Unit.__init__(self, 100, cd)
-        self.oper_amount = random.randint(1, 3)
-        self.operators = []
-        for i in range(self.oper_amount):
-            soldier = Soldier()
-            self.operators.append(soldier)
+        super().__init__(100, cd)
+        self.oper_amount = oper_amount
+        self.operators = operators
         self.name = "vehicle"
 
     def active_opers(self):
+        """ Returns amount of active operators
+
+        """
         active_opers = 0
         for s in self.operators:
             if s.is_active():
@@ -257,8 +257,7 @@ class Vehicle(Unit):
         if now - self.last_attacked >= self.cd:
             self.last_attacked = now
             return caused_dmg
-        else:
-            return caused_dmg
+        return caused_dmg
 
     def is_active(self):
         """ Returns true, if a vehicle is active
@@ -303,7 +302,12 @@ class Squad:
                 soldier = Soldier()
                 self.units.append(soldier)
             else:
-                vehicle = Vehicle()
+                oper_amount = random.randint(1, 3)
+                operators = []
+                for i in range(oper_amount):
+                    soldier = Soldier()
+                    operators.append(soldier)
+                vehicle = Vehicle(oper_amount, operators)
                 self.units.append(vehicle)
 
     def atk_success(self):
@@ -534,7 +538,7 @@ class Army:
 def main():
     # Initializing armies
     config_file = open("battle_config.yml")
-    config = yaml.load(config_file, Loader=yaml.FullLoader)
+    config = yaml.load(config_file, Loader=yaml.SafeLoader)
 
     seed_num = config["seed"]
     armies_amount = config["armies_amount"]
@@ -551,7 +555,7 @@ def main():
 
     # Main cycle of battle
     j = 0
-    game = {}
+    game = collections.OrderedDict()
     while active_armies >= 2:
         i = 0
         for army in armies:
